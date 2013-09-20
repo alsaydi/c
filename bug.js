@@ -8,24 +8,27 @@ function Point(x, y) {
 }
 
 function Bug(bugId, offsetFunction) {
+    this._moveFrequency = 3;
     this._stop = false;
     this._points = new Array();
     this._moving = false;
     this.bug = document.getElementById(bugId);
     this.getOffset = offsetFunction;
+    this.bug.bugObject = this;
+    this.bug.onclick = _toggleMoving;
     function _getX() {
         var cX = this.bug.getBoundingClientRect().left;
-        return cX;
+        return Math.round(cX);
     }
     this.getX = _getX;
     function _getY() {
         var cY = this.bug.getBoundingClientRect().top;
-        return cY;
+        return Math.round(cY);
     };
     this.getY = _getY;
     function _move(x, y) {
-        bug.style.left = Math.round(x).toString() + "px";
-        bug.style.top = Math.round(y).toString() + "px";
+        this.bug.style.left = Math.round(x).toString() + "px";
+        this.bug.style.top = Math.round(y).toString() + "px";
     }
     this.move = _move;
     function _findX1(slope, x2, y1, y2) {
@@ -36,7 +39,7 @@ function Bug(bugId, offsetFunction) {
         _moving = true;
         var cX = this.getX();
         var cY = this.getY();
-        if (cX == x && cY == y) {
+        if (cX == x && cY == y || this._stop) {
             //console.log("arrived at %d %d", x, y);
             _moving = false;
             return true;
@@ -68,7 +71,7 @@ function Bug(bugId, offsetFunction) {
     function _findSlope(x1, y1, x2, y2) {
         var slope = 0;
         slope = ((y2 - y1) / (x2 - x1));
-        //console.log("findSlope: x1:%d y1:%d, x2:%d y2:%d slope:%d", x1, y1, x2, y2, slope);
+        //console.log("findSlope: x1:%d y1:%d, x2:%d y2:%d slope:%f", x1, y1, x2, y2, slope);
         return slope;
     };
     function _startMoving(x, y) {
@@ -86,7 +89,7 @@ function Bug(bugId, offsetFunction) {
                 clearInterval(intervalId);
                 pBug._moving = false;
             }
-        }, 100,this);
+        }, this._moveFrequency,this);
     };
     this.startMoving = _startMoving;
 
@@ -122,4 +125,13 @@ function Bug(bugId, offsetFunction) {
         }
     }
     this.resumeMoving = _resumeMoving;
+    function _toggleMoving(e) {
+        console.log(this.bugObject);
+        console.log(e);
+        if (this.bugObject.isMoving()) {
+            this.bugObject.stopMoving();
+        } else {
+            this.bugObject.resumeMoving();
+        }
+    };
 }
