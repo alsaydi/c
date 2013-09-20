@@ -3,6 +3,7 @@
 <head>
     <title>Buzy Bug</title>
     <script src="jquery.js"></script>
+    <script src="bug.js"></script>
     <style>
         #bug {
             background-color: gray;
@@ -16,41 +17,37 @@
             border: 1px dashed red;
         }
 
-        body {
+        #container {
             width: 100%;
             height: 1000px;
         }
     </style>
 </head>
-<body onclick="showCoord();">
+<body >
     <div style="margin: 5px;">
-        <input type="range" id="offset" min="0.1" max="10" step="0.5" value="0.5" />
+        <input type="range" id="offset" min="0.1" max="100" step="0.5" value="1.5" style="width:300px;" />
         <br />
         <label>x</label><input id="x" value="100" type="number" />
         <br />
         <label>y</label><input id="y" value="100" type="number" />
         <input type="button" value="move" onclick="startMoving(this); return false;" />
+        <input type="button" value="stop" onclick="stopMoving(this); return false;" />
     </div>
-    <div id="container" style="border:1px solid black;">
+    <div id="container" style="border:1px solid black;" onclick="moveToCoord();">
         <div id="bug"></div>
     </div>
     <script type="text/javascript">
-        function Point(x, y) {
-            this.x = x;
-            this.y = y;
-            function _toString() {
-                return "x: " + x.toString() + " y: " + y.toString();
-            };
-            this.toString = _toString;
-        }
         function getOffset() {
             var offset = document.getElementById('offset').value;
             return parseFloat(offset.toString());
         }
     </script>
     <script type="text/javascript">
-        var points = new Array();
-        function showCoord() {
+        var theBug = new Bug("bug", getOffset);
+        function startMoving() {
+            moveToCoord();
+        }
+        function moveToCoord() {
             var e = window.event;
             var x = e.clientX;
             var y = e.clientY;
@@ -59,130 +56,18 @@
                 document.getElementById("x").value = x;
                 document.getElementById("y").value = y;
             }
-            pumpPoints(new Point(x, y));
-            startMoving(null);
-            /*points.push(new Point(x, y));
-            if (!started) {
-                //startMovingFromQueue();
-                started = true;
-            }*/
-        }
-        function findSlope(x1, y1, x2, y2) {
-            var slope = 0;
-            slope = ((y2 - y1) / (x2 - x1));
-            console.log("findSlope: x1:%d y1:%d, x2:%d y2:%d slope:%d", x1, y1, x2, y2, slope);
-            return slope;
-        }
-        function startMovingFromQueue() {
-            var p = points.pop();
-            while (p) {
-                document.getElementById("x").value = p.x;
-                document.getElementById("y").value = p.y;
-                //startMoving(null);
-                p = points.pop();
-            }
-            //setTimeout(function () { startMovingFromQueue(); }, 1000);
-        }
-        function pumpPoints(point) {
-            var x = point ? point.x : (Math.random() * 500) + 1;
-            var y = point ? point.y : (Math.random() * 500) + 1;
-            point = point || new Point(x, y);
-            console.log("pushing point: %s", point);
-            points.push(point);
-            //setTimeout(function () { pumpPoints(null); }, 2000);
-        }
-        function startMoving(sender) {
-            //console.clear(); 
-            var x = parseInt(document.getElementById("x").value);
-            var y = parseInt(document.getElementById("y").value);
-            var point = points.shift();
-            if (point) {
-                console.log("popped point", point);
-                x = point.x;
-                y = point.y;
-            }
-            var bug = document.getElementById("bug");
-            var cX = bug.getBoundingClientRect().left;
-            var cY = bug.getBoundingClientRect().top;
-            var slope = findSlope(cX, cY, x, y);
-            if (isNaN(slope)) {
-                console.log("ok no need to move because slope isNaN");
-                return false;
-            }
-            moveTo(bug, x, y, slope);
-        }
-        function moveBug(bug, x, y) {
-            //console.log("x: %d and y:%d", x, y);
-            //console.log("bug: ", bug);
-            bug.style.left = x.toString() + "px";
-            bug.style.top = y.toString() + "px";
-            //bug.className = "redb";
-        }
-        function findX1(slope, x2, y1, y2) {
-            var x1 = (y1 - y2 + slope * x2) / slope;
-            return x1;
-        }
-        function moveTo(bug, x, y, slope) {
-            var cX = bug.getBoundingClientRect().left;
-            var cY = bug.getBoundingClientRect().top;
-            if (cX == x && cY == y) {
-                console.log("arrived at %d %d", x, y);
-                var randX = (Math.random() * 500) + 1;
-                var randY = (Math.random() * 500) + 1;
-                //console.log("new random move to %d %d slope:%d", randX, randY, slope);
-                //moveTo(bug, randX, randY, slope);
-                if (1) {
-                    document.getElementById("x").value = Math.round(randX);
-                    document.getElementById("y").value = Math.round(randY);
-                }
-                startMoving(null);
-                return;
-            }
-            var newX = 0;
-            var newY = 0;
-            var offset = getOffset();
-            //console.log("offset %f", offset);   
-            if (cY != y) {
-                if (cY < y)
-                    newY = (cY + offset > y) ? y : cY + offset;
-                else if (cY > y)
-                    newY = (cY - offset < y) ? y : cY - offset;
-                newX = findX1(slope, x, newY, y);
+            /*if (theBug.isMoving()) {
+                console.log("bug is still moving");
             } else {
-                if (cX < x) {
-                    newX = (cX + offset > x) ? x : cX + offset;
-                } else if (cX > x) {
-                    newX = (cX - offset < x) ? x : cX - offset;
-                }
-                newY = y;
-            }
-            if (isNaN(newX)) {
-                newX = x;
-            }
-            moveBug(bug, newX, newY);
-            setTimeout(function () { moveTo(bug, x, y, slope); }, 2);
+                theBug.startMoving(x, y);
+            }*/
+            theBug.resumeMoving();
+            theBug.moveRandomly();
         }
-
-    </script>
-    <script>
-        function followMouse(sender) {
-            var bug = document.getElementById("bug");
-            console.log(sender);
-            var e = window.event || event;
-            var x = e.clientX;
-            var y = e.clientY;
-            //moveBugRandomly(bug, x, y);
-        }
-        function moveBugRandomly(bug, x, y) {
-            //console.log("x: %d and y:%d", x, y);
-            bug.style.left = x.toString() + "px";
-            bug.style.top = y.toString() + "px";
-            var sX = window.screen.width;
-            var sY = window.screen.height;
-            var randX = parseInt((Math.random() * sX + 1).toString());
-            var randY = parseInt((Math.random() * sY + 1).toString());
-            console.log("x: %d and y:%d", randX, randY);
-            setTimeout(function () { moveBugRandomly(bug, randX, randY); }, 3000);
+        function stopMoving() {
+            if (theBug.isMoving()) {
+                theBug.stopMoving();
+            }
         }
     </script>
 </body>
