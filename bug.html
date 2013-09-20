@@ -5,12 +5,22 @@
     <script src="jquery.js"></script>
     <script src="bug.js"></script>
     <style>
-        #bug {
+        #animatedBall, .movingBug{
             background-color: gray;
             position: fixed;
-            background-image: url('ball.jpg');
-            height: 46px;
-            width: 46px;
+            border:1px dotted red;
+            border-radius:35px;            
+        }
+         #flyer{
+            background-color: transparent;
+            position: fixed;
+            display:none;
+        }
+        #stillBall {
+            background-color: blue;
+            position: fixed;
+            border:1px dotted blue;
+            border-radius:35px;            
         }
 
         .redb {
@@ -25,16 +35,19 @@
 </head>
 <body >
     <div style="margin: 5px;">
-        <input type="range" id="offset" min="0.1" max="100" step="0.5" value="1.5" style="width:300px;" />
+        <input type="range" id="offset" min="0.1" max="100" step="0.5" value="5" style="width:300px;" />
         <br />
         <label>x</label><input id="x" value="100" type="number" />
         <br />
         <label>y</label><input id="y" value="100" type="number" />
-        <input type="button" value="move" onclick="startMoving(this); return false;" />
-        <input type="button" value="stop" onclick="stopMoving(this); return false;" />
+        <input type="button" value="Move" onclick="startMoving(this); return false;" />
+        <input type="button" value="Stop" onclick="stopMoving(this); return false;" />
     </div>
-    <div id="container" style="border:1px solid black;" onclick="moveToCoord();">
-        <div id="bug"></div>
+    <div id="container" style="border:1px solid black;" <!--onclick="moveToCoord();"-->>
+        <img id="animatedBall" src="ball_anim.gif" height="57" width="59" />
+        <br />
+        <img id="stillBall" src="ball.jpg" height="57" width="59" />
+        <br /><img id="flyer" src="flyer.gif" height="83" width="145"  />
     </div>
     <script type="text/javascript">
         function getOffset() {
@@ -43,9 +56,44 @@
         }
     </script>
     <script type="text/javascript">
-        var theBug = new Bug("bug", getOffset);
+        var theBug      = new Bug("animatedBall", getOffset);
+        var anotherBug  = new Bug("stillBall", getOffset);
+        var theFly = new Bug("flyer", getOffset);
+        var theBugs = new Array();
+        function createManyBalls() {
+            var count = 15;
+            var img;
+            for (var i = 0; i < count; i++) {
+                img = document.createElement("img");
+                img.id = "bug"+i.toString();
+                img.src = "ball_anim.gif";
+                img.width = 57;
+                img.height = 59;
+                img.className = "movingBug";
+                document.body.appendChild(img);
+                theBugs.push(new Bug(img.id, getOffset));
+            }
+            for (var i = 0; i < count; i++) {
+                console.log(theBugs[i]);
+                theBugs[i].moveRandomly();
+            }
+        }
+        createManyBalls();
         function startMoving() {
-            moveToCoord();
+            var x = parseInt(document.getElementById("x").value);
+            var y = parseInt(document.getElementById("y").value);
+            if (theBug.isMoving()) {
+                console.log("the bug is still moving. stop it first.");
+            } else {
+                console.log("moving to %d %d", x, y);
+                theBug.startMoving(x, y);
+            }
+            if (anotherBug.isMoving()) {
+                console.log("the other bug is still moving. stop it first.");
+            } else {
+                console.log("other bug is moving to %d %d", x, y);
+                anotherBug.startMoving(x, y);
+            }
         }
         function moveToCoord() {
             var e = window.event;
@@ -56,17 +104,22 @@
                 document.getElementById("x").value = x;
                 document.getElementById("y").value = y;
             }
-            /*if (theBug.isMoving()) {
-                console.log("bug is still moving");
-            } else {
-                theBug.startMoving(x, y);
-            }*/
             theBug.resumeMoving();
             theBug.moveRandomly();
+
+            anotherBug.resumeMoving();
+            anotherBug.moveRandomly();
+            
+            //theFly.resumeMoving();
+            //theFly.moveRandomly();
         }
-        function stopMoving() {
+        function stopMoving(sender) {
             if (theBug.isMoving()) {
                 theBug.stopMoving();
+                sender.value = "Resume";
+            } else {
+                theBug.resumeMoving();
+                sender.value = "Stop";
             }
         }
     </script>
